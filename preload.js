@@ -30,23 +30,31 @@ window.addEventListener('DOMContentLoaded', () => {
     let leftCtrlPressed = false;
     let rightCtrlPressed = false;
     let intervalId = null;
+    let cwElementLength = 100; // Length of a single Morse code element in milliseconds
+    let ditLength = cwElementLength * 1; // Length of a dit, one element
+    let dahLength = cwElementLength * 3; // Length of a dah, three elements
+    let spaceLength = cwElementLength * 1; // Length of a space, one element
 
-    // Function to handle iambic keying
-    const handleIambicKeying = () => {
+    // Function to handle hitting both paddles at the same time
+    const handleSqueezeKeying = () => {
+        console.log('Squeeze keying started');
         if (leftCtrlPressed && rightCtrlPressed) {
             clearInterval(intervalId);
             let toggle = true;
             intervalId = setInterval(() => {
                 if (!leftCtrlPressed || !rightCtrlPressed) {
                     clearInterval(intervalId);
+                    console.log('Squeeze keying stopped');
                     return;
                 }
                 if (toggle) {
                     morseCode += '.';
-                    playTone(100); // Play dit sound for 100ms
+                    playTone(ditLength); // Play dit sound for 100ms
+                    console.log('Squeeze dit played');
                 } else {
                     morseCode += '-';
-                    playTone(300); // Play dah sound for 300ms
+                    playTone(dahLength); // Play dah sound for 300ms
+                    console.log('Squeeze dah played');
                 }
                 toggle = !toggle;
 
@@ -57,26 +65,33 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
             }, 400); // Adjust interval duration as needed
         }
+        console.log('Squeeze keying stopped');
     };
 
     // Function to handle single key keying
     const handleSingleKeyKeying = (key) => {
         clearInterval(intervalId);
+        console.log('Single key keying started');
+
         if (key === 'dit') {
-            playTone(100); // Play dit sound immediately for 100ms
+            playTone(ditLength); // Play dit sound immediately for 100ms
             morseCode += '.';
+            console.log('Single Dit Played');
         } else if (key === 'dah') {
-            playTone(300); // Play dah sound immediately for 300ms
+            playTone(dahLength); // Play dah sound immediately for 300ms
             morseCode += '-';
+            console.log('Single Dah Played');
         }
 
         intervalId = setInterval(() => {
             if (key === 'dit' && leftCtrlPressed) {
                 morseCode += '.';
-                playTone(100); // Play dit sound for 100ms
+                playTone(ditLength); // Play dit sound for 100ms
+                console.log('String dit played');
             } else if (key === 'dah' && rightCtrlPressed) {
                 morseCode += '-';
-                playTone(300); // Play dah sound for 300ms
+                playTone(dahLength); // Play dah sound for 300ms
+                console.log('String dah played');
             } else {
                 clearInterval(intervalId);
             }
@@ -87,6 +102,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 morseCodeElement.innerText = morseCode;
             }
         }, key === 'dit' ? 200 : 400); // Adjust interval duration as needed
+        console.log('Single key keying stopped');
     };
 
     // Add event listeners for keyboard input
@@ -96,7 +112,8 @@ window.addEventListener('DOMContentLoaded', () => {
             if (!rightCtrlPressed) {
                 handleSingleKeyKeying('dit');
             } else {
-                handleIambicKeying();
+                handleSingleKeyKeying('dit');
+                //handleSqueezeKeying();   // Temp disabled Squeeze Keying for testing
             }
             console.log('Left Ctrl key or comma pressed (dit)');
         } else if ((event.code === 'ControlRight' || event.key === '.') && !rightCtrlPressed) {
@@ -104,7 +121,8 @@ window.addEventListener('DOMContentLoaded', () => {
             if (!leftCtrlPressed) {
                 handleSingleKeyKeying('dah');
             } else {
-                handleIambicKeying();
+                handleSingleKeyKeying('dah');
+                //handleSqueezeKeying(); // Temp disabled Squeeze Keying for testing
             }
             console.log('Right Ctrl key or period pressed (dah)');
         }
