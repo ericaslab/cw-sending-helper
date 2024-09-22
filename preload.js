@@ -62,6 +62,14 @@ window.addEventListener('DOMContentLoaded', () => {
     // Function to handle single key keying
     const handleSingleKeyKeying = (key) => {
         clearInterval(intervalId);
+        if (key === 'dit') {
+            playTone(100); // Play dit sound immediately for 100ms
+            morseCode += '.';
+        } else if (key === 'dah') {
+            playTone(300); // Play dah sound immediately for 300ms
+            morseCode += '-';
+        }
+
         intervalId = setInterval(() => {
             if (key === 'dit' && leftCtrlPressed) {
                 morseCode += '.';
