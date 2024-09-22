@@ -91,38 +91,38 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Add event listeners for keyboard input
     window.addEventListener('keydown', (event) => {
-        if (event.code === 'ControlLeft' && !leftCtrlPressed) {
+        if ((event.code === 'ControlLeft' || event.key === ',') && !leftCtrlPressed) {
             leftCtrlPressed = true;
             if (!rightCtrlPressed) {
                 handleSingleKeyKeying('dit');
             } else {
                 handleIambicKeying();
             }
-            console.log('Left Ctrl key pressed (dit)');
-        } else if (event.code === 'ControlRight' && !rightCtrlPressed) {
+            console.log('Left Ctrl key or comma pressed (dit)');
+        } else if ((event.code === 'ControlRight' || event.key === '.') && !rightCtrlPressed) {
             rightCtrlPressed = true;
             if (!leftCtrlPressed) {
                 handleSingleKeyKeying('dah');
             } else {
                 handleIambicKeying();
             }
-            console.log('Right Ctrl key pressed (dah)');
+            console.log('Right Ctrl key or period pressed (dah)');
         }
     });
 
     window.addEventListener('keyup', (event) => {
-        if (event.code === 'ControlLeft') {
+        if (event.code === 'ControlLeft' || event.key === ',') {
             leftCtrlPressed = false;
-            console.log('Left Ctrl key released');
-        } else if (event.code === 'ControlRight') {
+            console.log('Left Ctrl key or comma released');
+        } else if (event.code === 'ControlRight' || event.key === '.') {
             rightCtrlPressed = false;
-            console.log('Right Ctrl key released');
+            console.log('Right Ctrl key or period released');
         }
 
         if (!leftCtrlPressed && !rightCtrlPressed) {
             clearInterval(intervalId);
         } else if (leftCtrlPressed && rightCtrlPressed) {
-            handleIambicKeying();
+            // Add any additional logic if needed when both keys are pressed
         }
     });
 });
