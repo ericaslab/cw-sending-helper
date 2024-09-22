@@ -86,7 +86,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (morseCodeElement) {
                 morseCodeElement.innerText = morseCode;
             }
-        }, key === 'dit' ? 200 : 600); // Adjust interval duration as needed
+        }, key === 'dit' ? 200 : 400); // Adjust interval duration as needed
     };
 
     // Add event listeners for keyboard input
