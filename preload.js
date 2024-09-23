@@ -13,13 +13,33 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Create an AudioContext
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
+ 
+    // Variables to track key states and intervals
+    let leftCtrlPressed = false;
+    let rightCtrlPressed = false;
+    let intervalId = null;
+    let keyQueue = null;
+    let cwElementLength = 300; // Length of a single Morse code element in milliseconds
+    let ditLength = cwElementLength * 1; // Length of a dit, one element
+    let dahLength = cwElementLength * 3; // Length of a dah, three elements
+    let spaceLength = cwElementLength * 1; // Length of a space, one element
     let isPlaying = false;
-    // Function to play a 600 Hz sine wave for a short duration
-    const playTone = (duration) => {
+    let keyPlaying = null;
+
+
+    // Function to play SideTone
+    const playTone = (key) => {
         if (isPlaying) return; // If a sound is already playing, do nothing
 
         isPlaying = true; // Set the flag to indicate a sound is playing
+        keyPlaying = key;
+
+        if (key === 'dit') {
+            var duration = ditLength;
+        }
+        else if (key === 'dah') {
+            var duration = dahLength;
+        }
 
         const oscillator = audioContext.createOscillator();
         oscillator.type = 'sine';
@@ -30,17 +50,20 @@ window.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             oscillator.stop();
             isPlaying = false; // Clear the flag when the sound stops
+            keyPlaying = null;
+
+            if (key === 'dit') {
+                morseCode += '.';
+            }
+            else if (key === 'dah') {
+                morseCode += '-';
+            }
+            const morseCodeElement = document.getElementById('morse-code');
+            if (morseCodeElement) {
+                morseCodeElement.innerText = morseCode;
+            }
         }, duration);
     };
-
-    // Variables to track key states and intervals
-    let leftCtrlPressed = false;
-    let rightCtrlPressed = false;
-    let intervalId = null;
-    let cwElementLength = 100; // Length of a single Morse code element in milliseconds
-    let ditLength = cwElementLength * 1; // Length of a dit, one element
-    let dahLength = cwElementLength * 3; // Length of a dah, three elements
-    let spaceLength = cwElementLength * 1; // Length of a space, one element
 
     // Function to handle hitting both paddles at the same time
     const handleSqueezeKeying = () => {
@@ -79,44 +102,49 @@ window.addEventListener('DOMContentLoaded', () => {
     const handleSinglePaddleKeying = (key) => {
         clearInterval(intervalId);
         console.log('Single key keying started');
+        console.log('KeyQueue: ' + keyQueue);
+        console.log('KeyPlaying: ' + keyPlaying);
 
-        if (key === 'dit') {
-            playTone(ditLength); // Play dit sound immediately for 100ms
-            morseCode += '.';
-            console.log('Single Dit Played');
-            setTimeout(() => { }, spaceLength);
-        } else if (key === 'dah') {
-            playTone(dahLength); // Play dah sound immediately for 300ms
-            morseCode += '-';
-            console.log('Single Dah Played');
-            setTimeout(() => { }, spaceLength);
+        if (keyQueue === null) {
+            if (key === 'dit') {
+                if(isPlaying === true) {
+                    keyQueue = 'dit';
+                    return;
+                }
+                else if (isPlaying === false) {
+                    playTone(key); 
+                    setTimeout(() => { }, spaceLength);
+                }
+            } else if (key === 'dah') {
+                if(isPlaying === true) {
+                    keyQueue = 'dah';
+                    return;
+                }
+                else if (isPlaying === false) {
+                    playTone(key); 
+                    setTimeout(() => { }, spaceLength);
+                }
+            }
         }
-
-        const morseCodeElement = document.getElementById('morse-code');
-        if (morseCodeElement) {
-            morseCodeElement.innerText = morseCode;
+        else if (keyQueue !== null) {
+            if (keyQueue === 'dit') {
+                playTone(keyQueue); 
+                keyQueue = null;
+            } else if (keyQueue === 'dah') {
+                playTone(keyQueue); 
+                keyQueue = null;
+            }
         }
 
         intervalId = setInterval(() => {
             if (key === 'dit' && leftCtrlPressed) {
-                morseCode += '.';
-                playTone(ditLength); // Play dit sound for 100ms
-                console.log('String dit played');
-                setTimeout(() => { }, spaceLength);
+                playTone(key);
             } else if (key === 'dah' && rightCtrlPressed) {
-                morseCode += '-';
-                playTone(dahLength); // Play dah sound for 300ms
-                console.log('String dah played');
-                setTimeout(() => {}, spaceLength);
+                playTone(key); 
             } else {
                 clearInterval(intervalId);
             }
 
-            // Optionally, display the Morse code input
-            const morseCodeElement = document.getElementById('morse-code');
-            if (morseCodeElement) {
-                morseCodeElement.innerText = morseCode;
-            }
         }, key === 'dit' ? ditLength + spaceLength : dahLength + spaceLength); // Adjust interval duration as needed
         console.log('Single key keying stopped');
     };
