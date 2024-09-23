@@ -19,7 +19,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let rightCtrlPressed = false;
     let intervalId = null;
     let keyQueue = null;
-    let cwElementLength = 300; // Length of a single Morse code element in milliseconds
+    let cwElementLength = 100; // Length of a single Morse code element in milliseconds
     let ditLength = cwElementLength * 1; // Length of a dit, one element
     let dahLength = cwElementLength * 3; // Length of a dah, three elements
     let spaceLength = cwElementLength * 1; // Length of a space, one element
@@ -29,7 +29,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Function to play SideTone
     const playTone = (key) => {
-        if (isPlaying) return; // If a sound is already playing, do nothing
+        if (isPlaying) { // If a sound is already playing, queue the key
+            if (keyQueue === null && key !== keyPlaying) {
+                keyQueue = key;
+            }
+            return; 
+        }
 
         isPlaying = true; // Set the flag to indicate a sound is playing
         keyPlaying = key;
@@ -49,21 +54,32 @@ window.addEventListener('DOMContentLoaded', () => {
 
         setTimeout(() => {
             oscillator.stop();
-            isPlaying = false; // Clear the flag when the sound stops
-            keyPlaying = null;
 
-            if (key === 'dit') {
-                morseCode += '.';
-            }
-            else if (key === 'dah') {
-                morseCode += '-';
-            }
-            const morseCodeElement = document.getElementById('morse-code');
-            if (morseCodeElement) {
-                morseCodeElement.innerText = morseCode;
-            }
+            setTimeout(() => {
+                isPlaying = false; // Clear the flag when the sound stops
+                keyPlaying = null;
+
+                if (key === 'dit') {
+                    morseCode += '.';
+                }
+                else if (key === 'dah') {
+                    morseCode += '-';
+                }
+                const morseCodeElement = document.getElementById('morse-code');
+                if (morseCodeElement) {
+                    morseCodeElement.innerText = morseCode;
+                }
+            }, spaceLength);
         }, duration);
     };
+
+    // Check if we need to play the queued key
+    setInterval(() => {
+        if (keyQueue && !isPlaying) {
+            playTone(keyQueue);
+            keyQueue = null;
+        }
+    }, 10); // Check every 10 milliseconds
 
     // Function to handle hitting both paddles at the same time
     const handleSqueezeKeying = () => {
@@ -105,37 +121,13 @@ window.addEventListener('DOMContentLoaded', () => {
         console.log('KeyQueue: ' + keyQueue);
         console.log('KeyPlaying: ' + keyPlaying);
 
-        if (keyQueue === null) {
-            if (key === 'dit') {
-                if(isPlaying === true) {
-                    keyQueue = 'dit';
-                    return;
-                }
-                else if (isPlaying === false) {
-                    playTone(key); 
-                    setTimeout(() => { }, spaceLength);
-                }
-            } else if (key === 'dah') {
-                if(isPlaying === true) {
-                    keyQueue = 'dah';
-                    return;
-                }
-                else if (isPlaying === false) {
-                    playTone(key); 
-                    setTimeout(() => { }, spaceLength);
-                }
-            }
+        if (key === 'dit') {
+            playTone(key); 
+        } 
+        else if (key === 'dah') {
+            playTone(key); 
         }
-        else if (keyQueue !== null) {
-            if (keyQueue === 'dit') {
-                playTone(keyQueue); 
-                keyQueue = null;
-            } else if (keyQueue === 'dah') {
-                playTone(keyQueue); 
-                keyQueue = null;
-            }
-        }
-
+            
         intervalId = setInterval(() => {
             if (key === 'dit' && leftCtrlPressed) {
                 playTone(key);
@@ -145,7 +137,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 clearInterval(intervalId);
             }
 
-        }, key === 'dit' ? ditLength + spaceLength : dahLength + spaceLength); // Adjust interval duration as needed
+        }, key === 'dit' ? ditLength/4.5 : dahLength/4.5 ); // Adjust interval duration as needed
         console.log('Single key keying stopped');
     };
 
