@@ -14,15 +14,22 @@ window.addEventListener('DOMContentLoaded', () => {
     // Create an AudioContext
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
+    let isPlaying = false;
     // Function to play a 600 Hz sine wave for a short duration
     const playTone = (duration) => {
+        if (isPlaying) return; // If a sound is already playing, do nothing
+
+        isPlaying = true; // Set the flag to indicate a sound is playing
+
         const oscillator = audioContext.createOscillator();
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(600, audioContext.currentTime); // 600 Hz
         oscillator.connect(audioContext.destination);
         oscillator.start();
+
         setTimeout(() => {
             oscillator.stop();
+            isPlaying = false; // Clear the flag when the sound stops
         }, duration);
     };
 
@@ -69,7 +76,7 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     // Function to handle single key keying
-    const handleSingleKeyKeying = (key) => {
+    const handleSinglePaddleKeying = (key) => {
         clearInterval(intervalId);
         console.log('Single key keying started');
 
@@ -77,10 +84,17 @@ window.addEventListener('DOMContentLoaded', () => {
             playTone(ditLength); // Play dit sound immediately for 100ms
             morseCode += '.';
             console.log('Single Dit Played');
+            setTimeout(() => { }, spaceLength);
         } else if (key === 'dah') {
             playTone(dahLength); // Play dah sound immediately for 300ms
             morseCode += '-';
             console.log('Single Dah Played');
+            setTimeout(() => { }, spaceLength);
+        }
+
+        const morseCodeElement = document.getElementById('morse-code');
+        if (morseCodeElement) {
+            morseCodeElement.innerText = morseCode;
         }
 
         intervalId = setInterval(() => {
@@ -88,10 +102,12 @@ window.addEventListener('DOMContentLoaded', () => {
                 morseCode += '.';
                 playTone(ditLength); // Play dit sound for 100ms
                 console.log('String dit played');
+                setTimeout(() => { }, spaceLength);
             } else if (key === 'dah' && rightCtrlPressed) {
                 morseCode += '-';
                 playTone(dahLength); // Play dah sound for 300ms
                 console.log('String dah played');
+                setTimeout(() => {}, spaceLength);
             } else {
                 clearInterval(intervalId);
             }
@@ -101,7 +117,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if (morseCodeElement) {
                 morseCodeElement.innerText = morseCode;
             }
-        }, key === 'dit' ? 200 : 400); // Adjust interval duration as needed
+        }, key === 'dit' ? ditLength + spaceLength : dahLength + spaceLength); // Adjust interval duration as needed
         console.log('Single key keying stopped');
     };
 
@@ -110,18 +126,18 @@ window.addEventListener('DOMContentLoaded', () => {
         if ((event.code === 'ControlLeft' || event.key === ',') && !leftCtrlPressed) {
             leftCtrlPressed = true;
             if (!rightCtrlPressed) {
-                handleSingleKeyKeying('dit');
+                handleSinglePaddleKeying('dit');
             } else {
-                handleSingleKeyKeying('dit');
+                handleSinglePaddleKeying('dit');
                 //handleSqueezeKeying();   // Temp disabled Squeeze Keying for testing
             }
             console.log('Left Ctrl key or comma pressed (dit)');
         } else if ((event.code === 'ControlRight' || event.key === '.') && !rightCtrlPressed) {
             rightCtrlPressed = true;
             if (!leftCtrlPressed) {
-                handleSingleKeyKeying('dah');
+                handleSinglePaddleKeying('dah');
             } else {
-                handleSingleKeyKeying('dah');
+                handleSinglePaddleKeying('dah');
                 //handleSqueezeKeying(); // Temp disabled Squeeze Keying for testing
             }
             console.log('Right Ctrl key or period pressed (dah)');
