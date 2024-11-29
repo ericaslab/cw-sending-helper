@@ -141,6 +141,63 @@ window.addEventListener('DOMContentLoaded', () => {
         console.log('Single key keying stopped');
     };
 
+    async function connectSerial() {
+        try {
+            // Request a port and handle the permission prompt
+            const port = await navigator.serial.requestPort({
+                filters: [{ usbVendorId: 0x1a86 }] // Adjust the filter as needed
+            });
+
+            if (!port) {
+                console.error('No port selected by the user.');
+                return;
+            }
+
+
+            await port.open({ baudRate: 1200 });
+            console.log('Port opened successfully');
+
+            // Create a writer to send data to the serial port
+            const writer = port.writable.getWriter();
+
+            // Send the hex commands \x00\x02 to initialize the Winkeyer
+            const command = new Uint8Array([0x00, 0x02]);
+            await writer.write(command);
+            console.log('Initialization command sent');
+
+            // Release the writer lock
+            writer.releaseLock();
+
+            const reader = port.readable.getReader();
+            const decoder = new TextDecoderStream();
+            const inputDone = port.readable.pipeTo(decoder.writable);
+            const inputStream = decoder.readable;
+
+            const readerStream = inputStream.getReader();
+
+            while (true) {
+                const { value, done } = await readerStream.read();
+                if (done) {
+                    // Allow the serial port to be closed later.
+                    readerStream.releaseLock();
+                    break;
+                }
+                // Process the received data and append it to morseCode
+                morseCode += value;
+                const morseCodeElement = document.getElementById('morse-code');
+                if (morseCodeElement) {
+                    morseCodeElement.textContent = morseCode;
+                }
+            }
+        } catch (error) {
+            console.error('Error connecting to serial port:', error);
+        }
+    }
+
+    // Add event listener to the connect button
+    const connectButton = document.getElementById('connect-button');
+    connectButton.addEventListener('click', connectSerial);
+
     // Add event listeners for keyboard input
     window.addEventListener('keydown', (event) => {
         if ((event.code === 'ControlLeft' || event.key === ',') && !leftCtrlPressed) {
@@ -179,4 +236,5 @@ window.addEventListener('DOMContentLoaded', () => {
             // Add any additional logic if needed when both keys are pressed
         }
     });
+
 });
